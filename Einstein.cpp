@@ -1,11 +1,16 @@
 #include "Einstein.h"
+#include<ctime>
 #include<cmath>
+#include<cstdlib>
 #include<vector>
 using namespace std;
+//a random number between 0-100
+int random(){
+	srand(time(0));
+	rand();
+	return (int)(100.0*rand() / RAND_MAX);
+}
 
-//0 up  1 left  2 leftup
-string right_action_for_blue[3][4][4];
-string right_action_for_red[3][4][4];
 
 string Direction_blue[3] = { "up","left","leftup" };
 string Direction_red[3] = { "down","right","rightdown" };
@@ -23,21 +28,35 @@ public:
 	};
 };
 
+int get_score(State &state, Tree &tree){
+
+}
+
+//& for state because has int*!!!
 class State {
 public:
+	//used for expand
 	vector<Action> avail_act;//all actions can take in this state
-	string winer;
 	int chessboard[5][5];
-	string color;//who is going to act   0 red 1 blue
+	string color;//who is going to act
+	string winer;//note the winer in one simulation
 	
-	State(int *board) {
+	State(const State& state){
+		for (int i = 0; i < 5; i++){
+			for (int j = 0; j < 5; j++){
+				chessboard[i][j] = state.chessboard[i][j];
+			}
+		}
+		color = state.color;
+	}
+	State(int *board,string Color) {
 		winer = "null";
 		for (int i = 0; i < 5; i++) {
 			for (int j = 0; j < 5; j++) {
 				chessboard[i][j] = board[i * 5 + j];
 			}
 		}
-		
+		color = Color;
 	}
 
 	//game over ; set the winer
@@ -120,6 +139,44 @@ public:
 		}
 		return false;
 	}
+	//in this state act action x
+	void act(Action x){
+		int c_x, c_y;
+		for (int i = 0; i < 5; i++) {
+			for (int j = 0; j < 5; j++) {
+				if (chessboard[i][j] == x.number) {
+					c_x = j;
+					c_y = i;
+					break;
+				}
+			}
+		}
+
+		chessboard[c_y][c_x] = 0;
+
+		if (x.direction == "up") {
+			c_y--;
+		}
+		else if (x.direction == "left") {
+			c_x--;
+		}
+		else if (x.direction == "leftup") {
+			c_x--;
+			c_y--;
+		}
+		else if (x.direction == "down") {
+			c_y++;
+		}
+		else if (x.direction == "right") {
+			c_x++;
+		}
+		else if (x.direction == "rightdown") {
+			c_x++;
+			c_y++;
+		}
+
+		chessboard[c_y][c_x] = x.number;
+	}
 };
 
 Action UCTsearch();
@@ -127,6 +184,7 @@ Action UCTsearch();
 //my UCT node
 class Node {
 public:
+	State state;//now state
 	Action action;//how to get here
 	int total;//total number get there
 	int score;//win number
@@ -140,14 +198,70 @@ class Tree {
 	string myColor;//"blue" or "red"
 	Node* root;
 public:
-	Tree(string color, State origin) {
+	Tree(string color, State& origin) {
 		myColor = color;
 
 	}
-	Node* expand(State s) {
+	Node* expand(State& s) {
 
 	}
-	void nextnode();
+	int simulate(State& state){//simulate in state, back the profit
+		//save
+		State temp(state);
+		//use the temp -chessboard and color
+		while (!temp.end()){
+			int my_chess[6] = { 0 };
+			vector<int> gamble_number;
+			if (temp.color == "blue"){
+				for (int i = 0; i < 5; i++){
+					for (int j = 0; j < 5; j++){
+						if (temp.chessboard[i][j]>6){
+							my_chess[temp.chessboard[i][j] - 7] = temp.chessboard[i][j];
+						}
+					}
+				}
+				int pre = -1;
+				int cur = 0;
+				for (int i = 0; i < 6; i++){
+					if (my_chess[i] == 0){
+						//if (cur != -1&&pre==-1){
+						//	for (; pre < cur; pre++){
+						//		gamble_number.push_back(my_chess[cur]);
+						//		gamble_number.push_back(my_chess[cur]);
+						//	}
+						//}
+						//else if (cur != -1){
+						//	for (; pre < cur; pre++){
+						//		gamble_number.push_back(my_chess[cur]);
+						//		gamble_number.push_back(my_chess[cur]);
+						//	}
+						//}
+
+					}
+					else{
+						//
+						gamble_number.push_back(my_chess[i]);
+						gamble_number.push_back(my_chess[i]);
+						//
+						for (; pre < i; pre++){
+
+						}
+					}
+				}
+			}
+			else{
+				for (int i = 0; i < 5; i++){
+					for (int j = 0; j < 5; j++){
+						if (temp.chessboard[i][j]>0 && temp.chessboard[i][j] <= 6){
+							my_chess[temp.chessboard[i][j] - 1] = temp.chessboard[i][j];
+						}
+					}
+				}
+
+			}
+			
+		}
+	}
 };
 
 
